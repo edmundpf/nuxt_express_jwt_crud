@@ -1,0 +1,7 @@
+.table-condensed > .table-sm td tr {
+	padding-left: 0.2em !important;
+	padding-right: 0.2em !important;
+}
+
+@import '~bootstrap/scss/bootstrap.scss';
+@import '~bootstrap-vue/src/index.scss';
