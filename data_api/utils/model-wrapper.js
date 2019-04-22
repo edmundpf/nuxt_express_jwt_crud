@@ -1,7 +1,8 @@
 // SCHEMAS //
 
 const customer = require('../models/customer.js');
-const userAuth = require('../models/user-auth.js')
+const userAuth = require('../models/user-auth.js');
+const secretKey = require('../models/secret-key.js');
 
 // APP ROUTES //
 
@@ -14,6 +15,10 @@ const list_routes = {'customer': {
 const normal_routes = {'user_auth': {
 						'model': userAuth,
 						'primary_key': 'username',
+						},
+						'secret_key': {
+						'model': secretKey,
+						'primary_key': 'key',
 						},
 					}
 
@@ -31,6 +36,7 @@ const route_methods = [...normal_methods, ...list_methods]
 
 module.exports = {
 	userAuth, 
+	secretKey,
 	list_routes, 
 	normal_routes, 
 	app_routes, 

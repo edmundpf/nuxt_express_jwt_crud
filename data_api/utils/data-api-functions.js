@@ -33,6 +33,17 @@ async function responseFormat(method, args, req, res) {
 	}
 }
 
+// Incorrect Secret Key
+
+function incorrectSecretKey(res) {
+	return res.status(401).json({ status: 'error',
+									response: { 
+										message: 'Incorrect secret key.',
+										codes: ['INCORRECT'],
+									}
+								})
+}
+
 // Incorrect Username or Password JSON
 
 function incorrectUserOrPass(res) {
@@ -110,6 +121,9 @@ function signToken(user) {
 // Verify JSON Web Token
 
 function verifyToken(req, res, next) {
+	if (req.params.path != null && req.params.path == 'secret_key') {
+		return next();
+	}
 	var token = req.query.auth_token || req.headers['x-access-token'] ||
 				req.headers['authorization'];
 	if (!token) {

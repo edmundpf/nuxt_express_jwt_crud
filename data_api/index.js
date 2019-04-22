@@ -4,6 +4,7 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 
 const userAuth = require('./utils/model-wrapper').userAuth;
+const secretKey = require('./utils/model-wrapper').secretKey;
 const list_routes = require('./utils/model-wrapper').list_routes;
 const normal_routes = require('./utils/model-wrapper').normal_routes;
 const app_routes = require('./utils/model-wrapper').app_routes;
@@ -13,6 +14,7 @@ const route_methods = require('./utils/model-wrapper').route_methods;
 
 const objOmit = require('./utils/data-api-functions').objOmit;
 const responseFormat = require('./utils/data-api-functions').responseFormat;
+const incorrectSecretKey = require('./utils/data-api-functions').incorrectSecretKey;
 const incorrectUserOrPass = require('./utils/data-api-functions').incorrectUserOrPass;
 const userNotFound = require('./utils/data-api-functions').userNotFound;
 const noCurrentPass = require('./utils/data-api-functions').noCurrentPass;
@@ -24,7 +26,6 @@ const serverPort = require('./utils/server-config').serverPort || process.env.PO
 const corsPort = require('./utils/server-config').corsPort;
 const mongoosePort = require('./utils/server-config').mongoosePort;
 const databaseName = require('./utils/server-config').databaseName;
-const sk = require('./utils/server-config').sk;
 
 // MongoDB Config
 
@@ -186,8 +187,17 @@ app.all('/signup', async (req, res) => {
 
 	try {
 
-		if (req.query.sk == Buffer.from(sk, 'base64').toString('ascii')) {
+		if (req.query.secret_key != null) {
 
+			const key = await secretKey.find({});
+
+			if (key.length > 0) {
+				const key_match = await bcrypt.compare(req.query.secret_key, key[key.length - 1].key);
+				if (!key_match) {
+					return incorrectSecretKey(res);
+				}
+			}
+			
 			allowedPassword(req, res);
 
 			const response = await userAuth.create(req.query);
@@ -248,13 +258,6 @@ app.all('/verify_token', verifyToken, async (req, res) => {
 	else {
 		return res.json({ status: 'ok', response: { message: 'Token verified.'}});
 	}
-})
-
-// B64 Encode String
-
-app.all('/b64', async (req, res) => {
-	try { return res.json({ status: 'ok', response: Buffer.from(req.query.string).toString('base64') })}
-	catch(error) { return res.status(500).json({ status: 'error', response: 'Could not encode string.' })}
 })
 
 // Export the Server Middleware
