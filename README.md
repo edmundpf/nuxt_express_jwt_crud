@@ -6,8 +6,23 @@
 * Install
 	``` bash
 	# Clone the repo
-	git clone git@github.com:edmundpf/nuxt_express_jwt.git
+	$ git clone git@github.com:edmundpf/nuxt_express_jwt.git
 
 	# Install the dependencies
-	npm install
+	$ npm install
 	```
+* Secret Key setup
+	* Save a secret key (encrypted by bcrypt) to protect your admin /signup endpoint
+	* First, start the backend server
+		``` bash
+		# Open API folder
+		$ cd data_api
+		
+		# Start Server
+		$node index.js
+		```
+	* Navigate to `http://localhost:4000/secret_key/insert?key=YOUR_KEY_HERE` in your browser to save your key
+		* Your key is set, remember this key
+* Admin setup
+	* To add an admin user that will be needed to use the web app/visit the API endpoints, navigate to `http://localhost:4000/signup?username=YOUR_USERNAME&password=YOUR_PASSWORD&secret_key=YOUR_SECRET_KEY`
+	* Your admin user is added.
