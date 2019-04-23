@@ -13,6 +13,7 @@ const normal_methods = require('./utils/model-wrapper').normal_methods;
 const route_methods = require('./utils/model-wrapper').route_methods;
 
 const objOmit = require('./utils/data-api-functions').objOmit;
+const schemaInfo = require('./utils/data-api-functions').schemaInfo;
 const responseFormat = require('./utils/data-api-functions').responseFormat;
 const incorrectSecretKey = require('./utils/data-api-functions').incorrectSecretKey;
 const incorrectUserOrPass = require('./utils/data-api-functions').incorrectUserOrPass;
@@ -89,6 +90,12 @@ app.all(`/:path(${Object.keys(app_routes).join('|')})/:method(${normal_methods.j
 
 		else if (req.params.method == 'get_all') {
 			await responseFormat(model.find.bind(model), [{}], req, res);				
+		}
+
+		// Get Schema
+
+		else if (req.params.method == 'schema') {
+			await responseFormat(schemaInfo, [model, primary_key], req, res)
 		}
 
 		// Sterilize

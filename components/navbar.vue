@@ -32,9 +32,9 @@ export default {
 	data: function () {
 		return {
 			links: [
-				{ title: 'User Auth', path: 'user_auth', primary_key: 'username', list_fields: false },
-				{ title: 'Secret Key', path: 'secret_key', primary_key: 'key', list_fields: false },
-				{ title: 'Customers', path: 'customer', primary_key: 'email', list_fields: ['products_purchased'] },
+				{ title: 'User Auth', path: 'user_auth' },
+				{ title: 'Secret Key', path: 'secret_key' },
+				{ title: 'Customers', path: 'customer' },
 			]
 		}
 	},
@@ -43,7 +43,7 @@ export default {
 	},
 	methods: {
 		crudUrl(link) {
-			return `/crud?model=${link.path}&key=${link.primary_key}&list=${link.list_fields}`;
+			return `/crud?model=${link.path}`;
 		}
 	}
 }

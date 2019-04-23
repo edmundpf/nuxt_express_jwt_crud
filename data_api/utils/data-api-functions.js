@@ -77,6 +77,21 @@ function noCurrentPass(res) {
 							})
 }
 
+// Get Schema Info
+
+async function schemaInfo(model, primary_key) {
+	const schema = model.schema.paths
+	const keys = Object.keys(schema)
+	var list_keys = []
+	for (const key of keys) {
+		if (schema[key].$isMongooseArray != null && 
+			schema[key].$isMongooseArray == true) {
+				list_keys.push(key)
+		}
+	}
+	return({ schema: keys, primary_key: primary_key, list_fields: list_keys })
+}
+
 // Allowed Password Check
 
 function allowedPassword(req, res) {
@@ -158,6 +173,7 @@ function verifyToken(req, res, next) {
 module.exports = {
 	objOmit,
 	responseFormat,
+	schemaInfo,
 	incorrectUserOrPass,
 	userNotFound,
 	noCurrentPass,

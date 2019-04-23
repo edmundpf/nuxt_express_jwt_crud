@@ -180,6 +180,7 @@ export default {
 			primary_key: null,
 			primary_val: '',
 			listKeys: [],
+			allKeys: [],
 			editModal: {
 				id: 'edit-modal',
 				title: '',
@@ -196,29 +197,37 @@ export default {
 		}
 	},
 	async mounted() {
+		await this.getAttributes();
 		await this.apiReset();
 	},
 	methods: {
+		async getAttributes() {
+			const api_req = await apiReq(this, `${this.$route.query.model}/schema`)
+			this.primary_key = api_req.response.primary_key
+			this.listKeys = api_req.response.list_fields
+			this.allKeys = api_req.response.schema
+		},
 		async apiReset() {
-
-			this.primary_key = this.$route.query.key;
-			if (!['false', false].includes(this.$route.query.list)) {
-				this.listKeys = this.$route.query.list.split(',');
-			}
 
 			this.fields = [];
 			this.editFields = [];
 			this.createFields = [];
 
 			var items = await apiReq(this, `${this.$route.query.model}/get_all`)
-			if (items.status == 'ok') {
-				var delete_keys = ['_id', 'uid', '__v']
-				var all_keys = Object.keys(items.response[0])
-				for (var i = items.response.length - 1; i >= 0; i--) {
-					if (this.listKeys.includes(items.response[i])) {
 
+			if (items.status == 'ok') {
+
+				var delete_keys = ['_id', 'uid', '__v']
+
+				for (const key of delete_keys) {
+					const del_index = this.allKeys.indexOf(key)
+					if (del_index >= 0) {
+						this.allKeys.splice(this.allKeys.indexOf(key), 1)
 					}
-					for (const key of all_keys) {
+				}
+
+				for (var i = items.response.length - 1; i >= 0; i--) {
+					for (const key of this.allKeys) {
 						if (this.listKeys.includes(key)) {
 							items.response[i][key] = items.response[i][key].toString();
 						}
@@ -233,32 +242,31 @@ export default {
 				this.items = items.response;
 				this.totalRows = this.items.length;
 
-				if (this.items.length > 0) {
+				for (const key of this.allKeys) {
+					this.fields.push({ "key": key, "sortable": true });
+					if (!['createdAt', 'updatedAt'].includes(key)) {
 
-					var fields_temp = Object.keys(this.items[0]);
-					for (const key of fields_temp) {
-						this.fields.push({ "key": key, "sortable": true });
-						if (!['createdAt', 'updatedAt'].includes(key)) {
-
-							var fields_dict = { "key": key, "value": '', "list_mode": 'Set' };
-							if (this.listKeys.includes(key)) {
-								fields_dict.list = true;
-							}
-							else {
-								fields_dict.list = false;								
-							}
-							if (key == this.primary_key) {
-								fields_dict.primary = true;
-							}
-							else {
-								fields_dict.primary = false								
-							}
-							this.editFields.push(fields_dict);
-							this.createFields.push(fields_dict);	
+						var fields_dict = { "key": key, "value": '', "list_mode": 'Set' };
+						if (this.listKeys.includes(key)) {
+							fields_dict.list = true;
 						}
+						else {
+							fields_dict.list = false;								
+						}
+						if (key == this.primary_key) {
+							fields_dict.primary = true;
+						}
+						else {
+							fields_dict.primary = false								
+						}
+						this.editFields.push(fields_dict);
+						this.createFields.push(fields_dict);	
 					}
-					this.fields.push({ key: "actions", sortable: false });
 				}
+				if (this.fields.length > 0) {
+					this.fields.push({ key: "actions", sortable: false });					
+				}
+
 			}
 			else {
 

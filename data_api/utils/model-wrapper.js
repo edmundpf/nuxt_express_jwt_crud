@@ -27,8 +27,8 @@ const app_routes = {...list_routes, ...normal_routes}
 // ROUTE METHODS
 
 const list_methods = ['push', 'set']
-const normal_methods = ['insert', 'update', 'delete',
-					 'delete_all', 'get', 'get_all', 'sterilize']
+const normal_methods = ['insert', 'update', 'delete', 'delete_all',
+					 	'get', 'get_all', 'sterilize', 'schema']
 
 const route_methods = [...normal_methods, ...list_methods]
 
