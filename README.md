@@ -1,6 +1,6 @@
 # Nuxt/Express/MongoDB/JWT Database Admin Boilerplate
 
-> Database admin starter code with Express backend API and Nuxt/Vue CRUD web app (**TO-DO: Add create/update/delete functionality, currently view-only)**. Includes universal create/update/get Express API endpoints for your MongoDB collections/schema, just add your schema to the project and edit the config. This can be useful for executing backend logic in different languages and using the API endpoints to manage your data. This data can be viewed from an admin perspective with the included Nuxt.js app with a few lines of configuration.
+> Database admin starter code with Express backend API and Nuxt/Vue CRUD web app. Includes universal CRUD Express API endpoints for your MongoDB collections/schema, just add your schema to the project and edit the config. This can be useful for executing backend logic in different languages and using the API endpoints to manage your data. The data can be viewed/edited from an admin perspective with the included Nuxt.js app with a few lines of configuration.
 
 ## Setup
 * Install
@@ -23,10 +23,10 @@
 		```
 	* Navigate to `http://localhost:4000/secret_key/insert?key=YOUR_KEY_HERE` in your browser to save your key
 		* Your key is set, remember this key
-		* The `/update` route is not set to handle schemas with only one field, so to update your primary key, navigate to `/secret_key/delete_all` and then insert a new key
+		* The `/update` route is not set to handle schemas with only one field, so either delete the key and create another via the web app or navigate to `/secret_key/delete_all` then insert a new key
 * Admin setup
 	* To add an admin user that will be needed to use the web app and visit the API endpoints, navigate to `http://localhost:4000/signup?username=YOUR_USERNAME&password=YOUR_PASSWORD&secret_key=YOUR_SECRET_KEY`
-	* To edit your secret key or admin credentials, see more info on the api endpoints here: [API Documentation](https://github.com/edmundpf/nuxt_express_jwt/blob/master/data_api/README.md)
+	* To edit your secret key or admin credentials, use the web app after configuration, or see more info on the api endpoints here: [API Documentation](https://github.com/edmundpf/nuxt_express_jwt/blob/master/data_api/README.md)
 * `package.json`
 	* Edit title, author, email, etc. to fit the needs of your project
 * Backend configuration
@@ -35,8 +35,10 @@
 	* Add your schema to the *~/data_api/models* folder
 		* As you will see in the example customer schema, all the models use timestamps and incrementing uid's as a standard
 			``` javascript
-			# The "id" field is the key for an internal *counters* collection, this must be unique from your other schema
-			# The "inc_field" field is the key for the respective schema. *uid* is used throughout the framework for this field as a standard.
+			# The "id" field is the key for an internal "counters" collection. 
+			# this must be unique from your other schema.
+			# The "inc_field" field is the key for the respective schema. 
+			# "uid" is used throughout the framework for this field as a standard.
 			customer.plugin(autoIncrement, { id: 'customer_uid', 
 									inc_field: 'uid' });
 			```
@@ -52,12 +54,15 @@
 		data: function () {
 		return {
 			links: [
-				{ title: 'Navbar Link Title Here', path 'api_path_here' },
+				{ title: 'Navbar Link Title Here', 
+					path: 'api_path_here' },
 				{ ... },
 			]
 		}
 		},
 		```
+		* Now when you launch the web app, your schemas will show under the "Data" dropdown on the navbar after login
+		* Your schema are now properly configured and you can begin viewing/editing your data
 ## Run Web App
 * Launch as show below...
 	``` bash
@@ -69,10 +74,5 @@
 	$ npm start
 	```
 	* The credentials for the web app will be the credentials you added with the `/signup` endpoint earlier during backend configuration
-	* The JSON Web Token has a 24 hour inactivity timeout until you will be logged off the web app\
-## TO-DO
-* Add insert functionality
-* Add delete functionality
-* Add edit functionality
-* Add copy functionality
-		
+	* The JSON Web Token has a 24 hour inactivity timeout until you will be logged off the web app
+	
