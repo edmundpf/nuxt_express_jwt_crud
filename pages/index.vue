@@ -2,7 +2,7 @@
 	<b-container>
 		<b-row class="mt-5" align-h="center">
 			<b-col>
-				<h1 class="text-white text-center">
+				<h1 class="text-center">
 					{{ welcomeMessage }}
 				</h1>
 			</b-col>

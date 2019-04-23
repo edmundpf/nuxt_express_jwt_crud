@@ -3,7 +3,7 @@ module.exports = {
 	// Page Headers
 
 	head: {
-		title: 'reddit_karma_bot',
+		title: 'nuxt_express_jwt',
 		meta: [
 			{ charset: 'utf-8' },
 			{ name: 'viewport', content: 'width=device-width, initial-scale=1' },
