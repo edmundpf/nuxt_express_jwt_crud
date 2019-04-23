@@ -4,7 +4,6 @@
 		v-model="modalShow"
 		title="Logout" 
 		ok-variant="danger"
-		cancel-variant="secondary" 
 		ok-title="Logout"
 		@ok="submitEvent">
 		Are you sure you want to logout?

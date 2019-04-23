@@ -7,7 +7,7 @@
 
 				<b-navbar-nav>
 					<b-nav-item-dropdown text="Data" left>
-						<b-dropdown-item v-for="link in links" v-bind:key="link" :href="crudUrl(link.path)">{{ link.title }}</b-dropdown-item>
+						<b-dropdown-item v-for="link in links" v-bind:key="link.path" :href="crudUrl(link)">{{ link.title }}</b-dropdown-item>
 					</b-nav-item-dropdown>
 				</b-navbar-nav>
 
@@ -32,9 +32,9 @@ export default {
 	data: function () {
 		return {
 			links: [
-				{ title: 'User Auth', path: 'user_auth' },
-				{ title: 'Secret Key', path: 'secret_key'},
-				{ title: 'Customers', path: 'customer'},
+				{ title: 'User Auth', path: 'user_auth', primary_key: 'username', list_fields: false },
+				{ title: 'Secret Key', path: 'secret_key', primary_key: 'key', list_fields: false },
+				{ title: 'Customers', path: 'customer', primary_key: 'email', list_fields: ['products_purchased'] },
 			]
 		}
 	},
@@ -42,8 +42,8 @@ export default {
 		logoutModal,
 	},
 	methods: {
-		crudUrl(path) {
-			return `/crud?model=${path}`;
+		crudUrl(link) {
+			return `/crud?model=${link.path}&key=${link.primary_key}&list=${link.list_fields}`;
 		}
 	}
 }
