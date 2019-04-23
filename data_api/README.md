@@ -27,10 +27,10 @@
       * *password* must have at least 8 characters and must have at least 1 number.
   * Success: `{ status: 'ok', response: { message: 'Password updated.'} }`
   * Error: `{ message: "", codes: ["ERROR_CODE"] }`
-* `/b64`
-  * Parameters: `string`
-  * Success: `{"status":"ok","response":"NjlTYXNzeVBvcHRhcnRz"}`
-  * Error: `{"status":"error","response":"Could not encode string."}`
+* `/secret_key/insert`
+  * Parameters: `key`
+  * Success: `{"status":"ok","response":{attributes...}}`
+  * Error: `{ message: "", codes: ["ERROR_CODE"] }`
   ## CRUD Routes
   * Routes are applied to *account_listing, reddit_submission, reddit_user, twitter_user, and user_auth* models
     * I.E. */reddit_user/insert?...*
