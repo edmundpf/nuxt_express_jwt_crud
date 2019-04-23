@@ -46,23 +46,24 @@
 			* This allows these list objects to have api routes for setting the whole list, or pushing to the list field
 	* See more info at [Server/Schema Configuration](https://github.com/edmundpf/nuxt_express_jwt/blob/master/data_api/utils/README.md)
 ## Nuxt Configuration
-	* Edit *~/components/navbar.vue* 
-		* Add the link titles you would like to see in the navbar and the paths to your respective schema
-			``` javascript
-			data: function () {
-			return {
-				links: [
-					{ title: 'Navbar Link Title Here', path 'api_path_here' },
-					{ ... },
-				]
-			}
-			},
+* Edit *~/components/navbar.vue*
+	* Add the link titles you would like to see in the navbar and the paths to your respective schema
+		``` javascript
+		data: function () {
+		return {
+			links: [
+				{ title: 'Navbar Link Title Here', path 'api_path_here' },
+				{ ... },
+			]
+		}
+		},
 		```
 ## Run Web App
+* Launch as show below...
 	``` bash
 	# Launch dev instance
 	$ npm run dev
-	
+
 	# Run in production mode
 	$ npm build
 	$ npm start
@@ -70,8 +71,8 @@
 	* The credentials for the web app will be the credentials you added with the `/signup` endpoint earlier during backend configuration
 	* The JSON Web Token has a 24 hour inactivity timeout until you will be logged off the web app\
 ## TO-DO
-	* Add insert functionality
-	* Add delete functionality
-	* Add edit functionality
-	* Add copy functionality
+* Add insert functionality
+* Add delete functionality
+* Add edit functionality
+* Add copy functionality
 		
