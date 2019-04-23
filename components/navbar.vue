@@ -33,10 +33,8 @@ export default {
 		return {
 			links: [
 				{ title: 'User Auth', path: 'user_auth' },
-				{ title: 'Reddit Users', path: 'reddit_user'},
-				{ title: 'Twitter Users', path: 'twitter_user'},
-				{ title: 'Reddit Submissions', path: 'reddit_submission'},
-				{ title: 'Account Listing', path: 'account_listing'},
+				{ title: 'Secret Key', path: 'secret_key'},
+				{ title: 'Customers', path: 'customer'},
 			]
 		}
 	},
