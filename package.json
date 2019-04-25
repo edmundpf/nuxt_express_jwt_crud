@@ -27,6 +27,7 @@
     "mongoose-sequence": "^5.0.1",
     "node-sass": "^4.11.0",
     "nuxt": "^2.0.0",
+    "require-directory": "^2.1.1",
     "sass-loader": "^7.1.0",
     "uuid": "^3.3.2",
     "vuex-persistedstate": "^2.5.4"

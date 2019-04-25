@@ -1,0 +1,14 @@
+{
+	"secretKey": {
+		"path": "secret_key",
+		"primary_key": "key"
+	},
+	"userAuth": {
+		"path": "user_auth",
+		"primary_key": "username"
+	},
+	"customer": {
+		"path": "customer",
+		"primary_key": "email"
+	}
+}

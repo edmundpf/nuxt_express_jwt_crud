@@ -1,5 +1,8 @@
 const uuid = require('uuid/v4');
 const jwt = require('jsonwebtoken');
+const schemaInfo = require('./config-wrapper').schemaInfo;
+const userAuth = require('./config-wrapper').userAuth;
+const secretKey = require('./config-wrapper').secretKey;
 
 const SECRET_KEY = uuid();
 
@@ -31,6 +34,23 @@ async function responseFormat(method, args, req, res) {
 		}
 		return res.status(500).json(err_json);
 	}
+}
+
+// Update Query
+
+function updateQuery(req, primary_key) {
+	var update_query = objOmit(req.query, [primary_key])
+	if (update_query.update_primary != null) {
+		update_query[primary_key] = update_query.update_primary
+		update_query.update_primary = null
+	}
+	return update_query
+}
+
+// Get Schema Info ASYNC
+
+async function schemaAsync(model, primary_key) {
+	return schemaInfo(model, primary_key)
 }
 
 // Incorrect Secret Key
@@ -77,21 +97,6 @@ function noCurrentPass(res) {
 							})
 }
 
-// Get Schema Info
-
-async function schemaInfo(model, primary_key) {
-	const schema = model.schema.paths
-	const keys = Object.keys(schema)
-	var list_keys = []
-	for (const key of keys) {
-		if (schema[key].$isMongooseArray != null && 
-			schema[key].$isMongooseArray == true) {
-				list_keys.push(key)
-		}
-	}
-	return({ schema: keys, primary_key: primary_key, list_fields: list_keys })
-}
-
 // Allowed Password Check
 
 function allowedPassword(req, res) {
@@ -135,9 +140,20 @@ function signToken(user) {
 
 // Verify JSON Web Token
 
-function verifyToken(req, res, next) {
-	if (req.params.path != null && req.params.path == 'secret_key') {
-		return next();
+async function verifyToken(req, res, next) {
+	if (req.params.path != null) {
+		if (req.params.path == 'secret_key') {
+			const get_all = await secretKey.find({})
+			if (get_all.length <= 0) {
+				return next();
+			}
+		}
+		else if (req.params.path == 'signup') {
+			const get_all = await userAuth.find({})
+			if (get_all.length <= 0) {
+				return next();
+			}
+		}
 	}
 	var token = req.query.auth_token || req.headers['x-access-token'] ||
 				req.headers['authorization'];
@@ -173,7 +189,8 @@ function verifyToken(req, res, next) {
 module.exports = {
 	objOmit,
 	responseFormat,
-	schemaInfo,
+	schemaAsync,
+	updateQuery,
 	incorrectUserOrPass,
 	userNotFound,
 	noCurrentPass,

@@ -1,5 +1,5 @@
 <template>
-	<b-container>
+	<b-container fluid>
 
 			<b-alert 
 				:show="dismissCountDown"
@@ -7,7 +7,7 @@
 				variant="success" 
 				dismissible 
 				class="mt-3">
-				{{ this.feedbackMessage }}
+				{{ feedbackMessage }}
 			</b-alert>
 
 		<b-row class="mt-5">
@@ -43,45 +43,49 @@
 
 			<b-col md="6" class="my-1">
 				<b-form-group label-cols-sm="3" label="Insert record" class="mb-0">
-					<b-button @click="createButton($event.target)" class="mr-1" variant="success">
+					<b-button @click="createButton($event.target)" class="mr-1 mb-3" variant="success">
 						Create
 					</b-button>
 				</b-form-group>
 			</b-col>
 		</b-row>
 
-		<b-row align-h="center" class="mt-3">
+		<b-row align-h="center" class="mx-0">
+			<b-row class="stacked-responsive-table">
+				<b-table 
+					striped 
+					hover 
+					bordered 
+					show-empty
+					small
+					caption-top
+					stacked="md"
+					class="table-packed mb-5"
+					:items="items"
+					:current-page="currentPage"
+					:per-page="perPage"
+					:filter="filter"
+					:sort-by.sync="sortBy"
+					:sort-direction="sortDirection"
+					:fields="fields"
+					@filtered="onFiltered">
 
-			<b-table 
-				striped 
-				hover 
-				bordered 
-				show-empty
-				small
-				responsive
-				class="table-condensed mb-5"
-				:items="items"
-				:current-page="currentPage"
-				:per-page="perPage"
-				:filter="filter"
-				:sort-by.sync="sortBy"
-				:sort-direction="sortDirection"
-				:fields="fields"
-				@filtered="onFiltered">
+					<template slot="table-caption">{{ pageTitle }}</template>
 
-				<template slot="actions" slot-scope="row">
-					<b-button size="sm" @click="editButton(row.item, row.index, $event.target)" class="mr-1" variant="warning">
-						Edit
-					</b-button>
-					<b-button size="sm" @click="copyButton(row.item, row.index, $event.target)" class="mr-1" variant="info">
-						Copy
-					</b-button>
-					<b-button size="sm" @click="deleteButton(row.item, row.index, $event.target)" class="mr-1" variant="danger">
-						Delete
-					</b-button>
-				</template>
+					<template slot="actions" slot-scope="row">
+						<b-button size="sm" @click="editButton(row.item, row.index, $event.target)" class="mr-1" variant="warning">
+							Edit
+						</b-button>
+						<b-button size="sm" @click="copyButton(row.item, row.index, $event.target)" class="mr-1" variant="info">
+							Copy
+						</b-button>
+						<b-button size="sm" @click="deleteButton(row.item, row.index, $event.target)" class="mr-1" variant="danger">
+							Delete
+						</b-button>
+					</template>
 
-			</b-table>
+				</b-table>
+			</b-row>
 		</b-row>
 
 		<b-modal 
@@ -98,12 +102,13 @@
 			</b-alert>
 			<b-form-group v-for="field in editFields" v-bind:key="field.key" label-cols-sm="3" :label="titleCase(field.key)" class="mb-3">
 					<b-input-group>
-						<b-form-input v-model="field.value" :disabled="field.primary"></b-form-input>
+						<b-form-input v-model="field.value" v-if="isPassword(field)" type="password"></b-form-input>
+						<b-form-input v-model="field.value" v-else></b-form-input>
 						<b-input-group-append v-if="field.list">
 							<b-form-select
 								class="mb-2 mr-sm-2 mb-sm-0"
 								v-model="field.list_mode"
-								:options="['Set', 'Push']"
+								:options="['Set', 'Push', 'Push Unique']"
 								id="inline-form-custom-select-pref"
 							></b-form-select>
 						</b-input-group-append>
@@ -124,7 +129,8 @@
 				{{ this.feedbackMessage }}
 			</b-alert>
 			<b-form-group v-for="field in createFields" v-bind:key="field.key" label-cols-sm="3" :label="titleCase(field.key)" class="mb-3">
-					<b-form-input v-model="field.value" :disabled="field.list"></b-form-input>
+					<b-form-input v-model="field.value" v-if="isPassword(field)" type="password"></b-form-input>
+					<b-form-input v-model="field.value" v-else></b-form-input>
 			</b-form-group>
 		</b-modal>
 
@@ -178,9 +184,11 @@ export default {
 			editFields: [],
 			createFields: [],
 			primary_key: null,
+			primaryValTemp: '',
 			primary_val: '',
 			listKeys: [],
 			allKeys: [],
+			pageTitle: '',
 			editModal: {
 				id: 'edit-modal',
 				title: '',
@@ -206,6 +214,7 @@ export default {
 			this.primary_key = api_req.response.primary_key
 			this.listKeys = api_req.response.list_fields
 			this.allKeys = api_req.response.schema
+			this.pageTitle = this.titleCase(this.$route.query.model)
 		},
 		async apiReset() {
 
@@ -227,7 +236,7 @@ export default {
 				}
 
 				for (var i = items.response.length - 1; i >= 0; i--) {
-					for (const key of this.allKeys) {
+					for (const key of [...this.allKeys, ...delete_keys]) {
 						if (this.listKeys.includes(key)) {
 							items.response[i][key] = items.response[i][key].toString();
 						}
@@ -287,6 +296,11 @@ export default {
 			this.editModal.title = `Edit row ${index}`
 			this.populateForms(item, this.editFields)
 			this.$root.$emit('bv::show::modal', this.editModal.id, button)
+			for (var i = 0; i <= this.editFields.length - 1; i++) {
+				if (this.editFields[i].key == this.primary_key) {
+					this.primaryValTemp = this.editFields[i].value
+				}
+			}
 		},
 		copyButton(item, index, button) {
 			this.createModal.title = `Copy row ${index}`
@@ -330,6 +344,9 @@ export default {
 		titleCase(string) {
 			return startCase(camelCase(string));
 		},
+		isPassword(field) {
+			return (field.key == 'password')
+		},
 		countDownChanged(dismissCountDown) {
 			this.dismissCountDown = dismissCountDown
 		},
@@ -343,7 +360,8 @@ export default {
 			evt.preventDefault()
 			this.editShow = false
 			this.editAlert = false
-			this.resetFormModal(this.editModal, this.editFields)			
+			this.resetFormModal(this.editModal, this.editFields)
+			this.primaryValTemp = ''		
 		},
 		deleteCancel(evt) {
 			evt.preventDefault()
@@ -384,11 +402,19 @@ export default {
 			evt.preventDefault()
 			var edit_dict = {}
 			var push_list = []
+			var push_unique_list = []
 			var set_list = []
+			edit_dict[this.primary_key] = this.primaryValTemp
+
 			for (var i = this.editFields.length - 1; i >= 0; i--) {
 				if (this.editFields[i].value != '') {
 					if (!this.editFields[i].list) {
-						edit_dict[this.editFields[i].key] = this.editFields[i].value;
+						if (this.editFields[i].key != this.primary_key) {
+							edit_dict[this.editFields[i].key] = this.editFields[i].value;
+						}
+						else if (this.editFields[i].key == this.primary_key) {
+							edit_dict.update_primary = this.editFields[i].value
+						}
 					}
 					else {
 						if (this.editFields[i].list_mode == 'Set') {
@@ -396,6 +422,9 @@ export default {
 						}
 						else if (this.editFields[i].list_mode == 'Push') {
 							push_list.push({ [this.editFields[i].key]: this.editFields[i].value })
+						}
+						else if (this.editFields[i].list_mode == 'Push Unique') {
+							push_unique_list.push({ [this.editFields[i].key]: this.editFields[i].value })
 						}
 					}
 				}
@@ -406,26 +435,30 @@ export default {
 				actions.push({ action: 'update', dict: edit_dict })
 			}
 			for (var i = push_list.length - 1; i >= 0; i--) {
-				push_list[i][this.primary_key] = edit_dict[this.primary_key]
+				push_list[i][this.primary_key] = edit_dict.update_primary
 				actions.push({ action: 'push', dict: push_list[i] })
 			}
+			for (var i = push_unique_list.length - 1; i >= 0; i--) {
+				push_unique_list[i][this.primary_key] = edit_dict.update_primary
+				actions.push({ action: 'push_unique', dict: push_unique_list[i] })
+			}
 			for (var i = set_list.length - 1; i >= 0; i--) {
-				set_list[i][this.primary_key] = edit_dict[this.primary_key]
+				set_list[i][this.primary_key] = edit_dict.update_primary
 				actions.push({ action: 'set', dict: set_list[i] })
 			}
 
-			this.feedbackMessage = ''
 			var hasError = false
 			for (var i = 0; i <= actions.length - 1; i++) {
 				const api_req = await apiReq(this, `${this.$route.query.model}/${actions[i].action}`, actions[i].dict)
 				if (api_req.status == 'error') {
 					if (api_req.response.message != null && api_req.response.message != '') {
-						this.feedbackMessage += api_req.response.message
+						this.feedbackMessage = api_req.response.message
 					}
 					else {
-						this.feedbackMessage += api_req.response.errmsg
+						this.feedbackMessage = api_req.response.errmsg
 					}
-					hasError = true
+					this.editAlert = true
+					return
 				}
 				else if (api_req.status == 'ok') {
 					if (i == (actions.length - 1)) {
@@ -433,14 +466,12 @@ export default {
 						this.editShow = false
 						this.editAlert = false
 						this.resetFormModal(this.editModal, this.editFields)
+						this.primaryValTemp = ''
 						this.feedbackMessage = 'Record updated successfully'
 						this.dismissCountDown = this.dismissSecs
 						return
 					}
 				}
-			}
-			if (hasError) {
-				this.editAlert = true
 			}
 		},
 		async deleteEvent(evt) {

@@ -3,17 +3,23 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 
-const userAuth = require('./utils/model-wrapper').userAuth;
-const secretKey = require('./utils/model-wrapper').secretKey;
-const list_routes = require('./utils/model-wrapper').list_routes;
-const normal_routes = require('./utils/model-wrapper').normal_routes;
-const app_routes = require('./utils/model-wrapper').app_routes;
-const list_methods = require('./utils/model-wrapper').list_methods;
-const normal_methods = require('./utils/model-wrapper').normal_methods;
-const route_methods = require('./utils/model-wrapper').route_methods;
+const userAuth = require('./utils/config-wrapper').userAuth;
+const secretKey = require('./utils/config-wrapper').secretKey;
+const list_routes = require('./utils/config-wrapper').list_routes;
+const normal_routes = require('./utils/config-wrapper').normal_routes;
+const app_routes = require('./utils/config-wrapper').app_routes;
+const list_methods = require('./utils/config-wrapper').list_methods;
+const normal_methods = require('./utils/config-wrapper').normal_methods;
+const route_methods = require('./utils/config-wrapper').route_methods;
+
+const serverPort = require('./utils/config-wrapper').serverPort || process.env.PORT;
+const corsPort = require('./utils/config-wrapper').corsPort;
+const mongoosePort = require('./utils/config-wrapper').mongoosePort;
+const databaseName = require('./utils/config-wrapper').databaseName;
 
 const objOmit = require('./utils/data-api-functions').objOmit;
-const schemaInfo = require('./utils/data-api-functions').schemaInfo;
+const schemaAsync = require('./utils/data-api-functions').schemaAsync;
+const updateQuery = require('./utils/data-api-functions').updateQuery;
 const responseFormat = require('./utils/data-api-functions').responseFormat;
 const incorrectSecretKey = require('./utils/data-api-functions').incorrectSecretKey;
 const incorrectUserOrPass = require('./utils/data-api-functions').incorrectUserOrPass;
@@ -23,15 +29,11 @@ const allowedPassword = require('./utils/data-api-functions').allowedPassword;
 const signToken = require('./utils/data-api-functions').signToken;
 const verifyToken = require('./utils/data-api-functions').verifyToken;
 
-const serverPort = require('./utils/server-config').serverPort || process.env.PORT;
-const corsPort = require('./utils/server-config').corsPort;
-const mongoosePort = require('./utils/server-config').mongoosePort;
-const databaseName = require('./utils/server-config').databaseName;
-
 // MongoDB Config
 
 const db = mongoose.connect(`mongodb://localhost:${mongoosePort}/${databaseName}`, 
-							{ useNewUrlParser: true, useCreateIndex: true })
+							{ useNewUrlParser: true, useCreateIndex: true,
+								useFindAndModify: false })
 
 // Express Config
 
@@ -63,7 +65,7 @@ app.all(`/:path(${Object.keys(app_routes).join('|')})/:method(${normal_methods.j
 		else if (req.params.method == 'update') {
 			await responseFormat(model.updateOne.bind(model), 
 							[{ [primary_key]: req.query[primary_key] }, 
-							objOmit(req.query, [primary_key])], req, res);				
+							updateQuery(req, primary_key)], req, res);				
 		}
 
 		// Delete
@@ -92,10 +94,10 @@ app.all(`/:path(${Object.keys(app_routes).join('|')})/:method(${normal_methods.j
 			await responseFormat(model.find.bind(model), [{}], req, res);				
 		}
 
-		// Get Schema
+		// Get Schema Info
 
 		else if (req.params.method == 'schema') {
-			await responseFormat(schemaInfo, [model, primary_key], req, res)
+			await responseFormat(schemaAsync, [model, primary_key], req, res)
 		}
 
 		// Sterilize
@@ -127,7 +129,21 @@ app.all(`/:path(${Object.keys(list_routes).join('|')})/:method(${list_methods.jo
 		if (req.params.method == 'push') {
 			var push_dict = {};
 			for(const key of Object.keys(req.query)) {
-				if (key != primary_key && key != 'auth_token' && key != 'refresh_token') {
+				if (![primary_key, 'auth_token', 'refresh_token'].includes(key)) {
+					push_dict[key] = { $each: req.query[key].split(',')};
+				}
+			}
+			await responseFormat(model.updateOne.bind(model), 
+							[{ [primary_key]: req.query[primary_key] },
+							{ $push: push_dict }], req, res);				
+		}
+
+		// Push Unique
+
+		if (req.params.method == 'push_unique') {
+			var push_dict = {};
+			for(const key of Object.keys(req.query)) {
+				if (![primary_key, 'auth_token', 'refresh_token'].includes(key)) {
 					push_dict[key] = { $each: req.query[key].split(',')};
 				}
 			}
@@ -141,12 +157,81 @@ app.all(`/:path(${Object.keys(list_routes).join('|')})/:method(${list_methods.jo
 		else if (req.params.method == 'set') {
 			var set_dict = {};
 			for(const key of Object.keys(req.query)) {
-				if (key != primary_key && key != 'auth_token' && key != 'refresh_token') {
+				if (![primary_key, 'auth_token', 'refresh_token'].includes(key)) {
 					set_dict[key] = req.query[key].split(',');
 				}
 			}
-			await responseFormat(model.updateOne.bind(model), [set_dict], req, res);				
+			await responseFormat(model.updateOne.bind(model), 
+							[{ [primary_key]: req.query[primary_key] },
+							{ $set: set_dict }], req, res);				
 		}
+
+})
+
+// Login
+
+app.all('/login', async (req, res) => {
+
+	try {
+
+		const user = await userAuth.findOne({ username: req.query.username });
+
+		if (user) {
+			const pass_match = await bcrypt.compare(req.query.password, user.password);
+			if (!pass_match) {
+				return incorrectUserOrPass(res);
+			}
+			else {
+				const token = signToken(user);
+				return res.json({ status: 'ok', response: token });
+			}
+		}
+		else {
+			return userNotFound(res);
+		}
+	}
+	catch(error) {
+		return res.status(500).json({ status: 'error', response: error });
+	}
+})
+
+// Sign Up
+
+app.all('/:path(signup)', verifyToken, async (req, res) => {
+
+	try {
+
+		if (req.query.secret_key != null) {
+
+			const key = await secretKey.find({});
+
+			if (key.length > 0) {
+				const key_match = await bcrypt.compare(req.query.secret_key, key[key.length - 1].key);
+				if (!key_match) {
+					return incorrectSecretKey(res);
+				}
+			}
+			
+			allowedPassword(req, res);
+
+			const response = await userAuth.create(req.query);
+			if (req.query.username == response.username) {
+				const token = signToken(response);
+				return res.json({ status: 'ok', response: token });
+			}
+			else {
+				return res.status(401).json({ status: 'error', response: response });
+			}
+
+		}
+		else {
+			return res.status(401).json({ status: 'error', response: {message: 'Not Authorized.'} });
+		}
+		
+	}
+	catch(error) {
+		return res.status(500).json({ status: 'error', response: error });
+	}
 
 })
 
@@ -187,73 +272,6 @@ app.all('/update_password', verifyToken, async (req, res) => {
 	}
 	
 });
-
-// Sign Up
-
-app.all('/signup', async (req, res) => {
-
-	try {
-
-		if (req.query.secret_key != null) {
-
-			const key = await secretKey.find({});
-
-			if (key.length > 0) {
-				const key_match = await bcrypt.compare(req.query.secret_key, key[key.length - 1].key);
-				if (!key_match) {
-					return incorrectSecretKey(res);
-				}
-			}
-			
-			allowedPassword(req, res);
-
-			const response = await userAuth.create(req.query);
-			if (req.query.username == response.username) {
-				const token = signToken(response);
-				return res.json({ status: 'ok', response: token });
-			}
-			else {
-				return res.status(401).json({ status: 'error', response: response });
-			}
-
-		}
-		else {
-			return res.status(401).json({ status: 'error', response: {message: 'Not Authorized.'} });
-		}
-		
-	}
-	catch(error) {
-		return res.status(500).json({ status: 'error', response: error });
-	}
-
-})
-
-// Login
-
-app.all('/login', async (req, res) => {
-
-	try {
-
-		const user = await userAuth.findOne({ username: req.query.username });
-
-		if (user) {
-			const pass_match = await bcrypt.compare(req.query.password, user.password);
-			if (!pass_match) {
-				return incorrectUserOrPass(res);
-			}
-			else {
-				const token = signToken(user);
-				return res.json({ status: 'ok', response: token });
-			}
-		}
-		else {
-			return userNotFound(res);
-		}
-	}
-	catch(error) {
-		return res.status(500).json({ status: 'error', response: error });
-	}
-})
 
 // Verify Token
 

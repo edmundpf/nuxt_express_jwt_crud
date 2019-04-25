@@ -13,7 +13,7 @@
 
 				<b-navbar-nav class="ml-auto">
 					<b-nav-form>
-						<b-button v-b-modal.logout-modal>Logout</b-button>
+						<b-button v-b-modal.logout-modal class="nav-button">Logout</b-button>
 					</b-nav-form>
 				</b-navbar-nav>
 
@@ -26,16 +26,22 @@
 <script>
 
 import logoutModal from '~/components/logoutModal'
+import schemaConfig from '~/data_api/config/schema-config.json'
+import { startCase, camelCase } from 'lodash'
 
 export default {
 
 	data: function () {
+
+		const configKeys = Object.keys(schemaConfig);
+		var links = []
+		for (const key of configKeys) {
+			links.push({ title: startCase(camelCase(schemaConfig[key].path)), 
+						path: schemaConfig[key].path })
+		}
+
 		return {
-			links: [
-				{ title: 'User Auth', path: 'user_auth' },
-				{ title: 'Secret Key', path: 'secret_key' },
-				{ title: 'Customers', path: 'customer' },
-			]
+			links,
 		}
 	},
 	components: {

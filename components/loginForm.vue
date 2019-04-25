@@ -69,18 +69,29 @@ export default {
 
 	computed: {
 		userValidation() {
+			if (this.userId.length == 0) {
+				return null
+			}
 			return this.userId.length >= 8
 		},
 		passValidation() {
 			return this.passFeedbackString()
 		},
 		loginValidation() {
-			return this.userValidation && this.passValidation
+			if (this.userValidation == null || this.passValidation == null) {
+				return false
+			}
+			else {
+				return this.userValidation && this.passValidation
+			}
 		},
 	},
 
 	methods : {
 		passFeedbackString() {
+			if (this.userPass.length == 0) {
+				return null
+			}
 			if (this.userPass.length < 8 && !/\d/.test(this.userPass)) {
 				this.passFeedback = 'Your password must be at least 8 characters long and must contain at least 1 number.'
 			}

@@ -1,5 +1,6 @@
 var mongoose = require('mongoose');
 const autoIncrement = require('mongoose-sequence')(mongoose);
+const listCreate = require('../utils/model-hooks').listCreate;
 
 var customer = new mongoose.Schema({
 	email: {
@@ -25,6 +26,10 @@ var customer = new mongoose.Schema({
 		usePushEach: true,
 	},
 );
+
+customer.pre('save', async function() {
+	await listCreate(this, ['products_purchased']);
+});
 
 customer.plugin(autoIncrement, { id: 'customer_uid', 
 									inc_field: 'uid' });

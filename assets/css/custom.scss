@@ -1,6 +1,40 @@
-.table-condensed > .table-sm td tr {
-	padding-left: 0.2em !important;
-	padding-right: 0.2em !important;
+.stacked-responsive-table {
+	width: 100%;
+	@media screen and (min-width: 768px) {
+		display: block;
+		overflow-x: auto;
+	}
+	@media screen and (max-width: 768px) {
+		margin-left: 0em;
+		margin-right: 0em;
+	}
+	> .table.b-table.table-sm.table-packed {
+		white-space: nowrap;
+		@media screen and (min-width: 768px) {
+			thead tfoot { tr { th { 
+				padding-left: 0.2em;
+				padding-right: 0.2em;
+			}}}
+			tbody { tr { td {
+				padding-left: 0.2em;
+				padding-right: 0.2em;
+			}}}
+		}
+		@media screen and (max-width: 768px) {
+			tbody { tr { td {
+				max-width: 768px;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}}}
+		}
+	}
+}
+
+.nav-button {
+	@media screen and (max-width: 992px) {
+		margin: 1em;
+	}
 }
 
 @import '~bootstrap/scss/bootstrap.scss';
