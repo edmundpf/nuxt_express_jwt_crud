@@ -1,13 +1,14 @@
+import webConfig from '~/assets/json/webConfig.json'
 module.exports = {
 	
 	// Page Headers
 
 	head: {
-		title: 'nuxt_express_jwt',
+		title: webConfig.site_title,
 		meta: [
 			{ charset: 'utf-8' },
 			{ name: 'viewport', content: 'width=device-width, initial-scale=1' },
-			{ hid: 'description', name: 'description', content: 'Reddit Karma Bot' }
+			{ hid: 'description', name: 'description', content: webConfig.site_desc }
 		],
 		link: [
 			{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
