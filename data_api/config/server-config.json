@@ -1,6 +1,6 @@
 {
 	"serverPort": 4000,
 	"corsPort": 3000,
-	"monogoosePort": 27017,
+	"mongoosePort": 27017,
 	"databaseName": "your_database"
 }

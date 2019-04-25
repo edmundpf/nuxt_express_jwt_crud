@@ -3,6 +3,10 @@ module.exports = {
 	
 	// Page Headers
 
+	server: {
+		port: webConfig.port,
+	},
+
 	head: {
 		title: webConfig.site_title,
 		meta: [
