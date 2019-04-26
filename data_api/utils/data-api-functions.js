@@ -141,6 +141,7 @@ function signToken(user) {
 // Verify JSON Web Token
 
 async function verifyToken(req, res, next) {
+
 	if (req.params.path != null) {
 		if (req.params.path == 'secret_key') {
 			const get_all = await secretKey.find({})
