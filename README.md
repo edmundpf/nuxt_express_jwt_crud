@@ -42,3 +42,11 @@
 	* Use the credentials you created with the CLI to login
 	* The JSON Web Token has a 24 hour inactivity timeout until you will be logged off of the web app/API
 		* You'll need to login again to get a new token
+## API Routes
+* Use any language of choice to edit your data and see the changes on the web app in real time
+*[Additional Web App Info](https://github.com/edmundpf/nuxt_express_jwt_crud/blob/master/data_api/README.md)
+## Web App Info
+* [Additional Web App Info](https://github.com/edmundpf/nuxt_express_jwt_crud/blob/master/pages/README.md)
+## Schema Info
+* [Included Schema Specs](https://github.com/edmundpf/nuxt_express_jwt_crud/blob/master/data_api/models/README.md)
+* [Model Hooks Info](https://github.com/edmundpf/nuxt_express_jwt_crud/blob/master/data_api/utils/README.md)
