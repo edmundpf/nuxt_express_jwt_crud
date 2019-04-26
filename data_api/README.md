@@ -11,26 +11,28 @@
   * No token error: `{ status: 'error', response: { message: 'No token provided.'}}`
   * Invalid token error: `{ status: 'error', response: { message: 'Invalid token.'}}`
 ## Auth Routes
-* `/signup`
-  * Parameters: `username, password, sk`
-    * *username* and *password* must have at least 8 characters and *password* must have at least 1 number.
-    * *sk* is your secret signup key located in `~/data_api/utils/server-config.js`
-  * Success: `{ username, uid, accesstoken, expires_in }`
-  * Error: `{ message: "", codes: ["ERROR_CODE"] }`
 * `/login`
   * Parameters: `username, password`
+  * Success: `{ username, uid, accesstoken, expires_in }`
+  * Error: `{ message: "", codes: ["ERROR_CODE"] }`
+* `/signup`
+  * Parameters: `username, password, secret_key`
+    * *username* and *password* must have at least 8 characters and *password* must have at least 1 number.
+    * *secret_key* is the secret key you set up with the CLI
+	* **This endpoint is self-protecting, after ONE user is added JWT will be required**
   * Success: `{ username, uid, accesstoken, expires_in }`
   * Error: `{ message: "", codes: ["ERROR_CODE"] }`
 * `/update_password`
   * **JWT Required**
   * Parameters: `username, current_password, password`
       * *password* must have at least 8 characters and must have at least 1 number.
+	* **This endpoint is self-protecting, after ONE secret key is added JWT will be required**
   * Success: `{ status: 'ok', response: { message: 'Password updated.'} }`
   * Error: `{ message: "", codes: ["ERROR_CODE"] }`
-* `/secret_key/insert`
-  * Parameters: `key`
-  * Success: `{"status":"ok","response":{attributes...}}`
-  * Error: `{ message: "", codes: ["ERROR_CODE"] }`
+* `/verify_token`
+	* **JWT Required**
+	* Parameters: `auth_token`
+	* Success: `{ status: 'ok', response: { message: 'Token verified.'}`
   ## CRUD Routes
   * Routes are applied to *account_listing, reddit_submission, reddit_user, twitter_user, and user_auth* models
     * I.E. */reddit_user/insert?...*
@@ -38,9 +40,13 @@
     * Inserts record
     * Success: `{attributes...}`
     * Error: `{ name: "MongoError", code: 1050 }`
-  * `x/update, x/push, x/set`
+  * `x/update, x/push, x/push_unique, x/set`
     * `x/update` updates record
     * `x/push` pushes comma separated records into list
+			* Records will be placed regardless if there is an existing matching record in the list
+		* `x/push_unique` pushes unique comma separated records into the list
+			* Only records that do not exist already will be placed in the list
+			* This **WILL NOT** delete existing duplicate records
     * `x/set` sets list to comma separated records
     * Primary key required
     * Success: `{ n, nModified, ok }`
@@ -55,6 +61,9 @@
   * `x/get_all`
     * Gets all records
     * Success: `[{attributes...}, {}...]`
+	* `x/schema`
+		* Gets schema information
+		* Success: `{ schema: [], primary_key, list_fields: [] }`
   * `x/sterilize`
     * Removes obsolete fields after updating schema
     * Parameters: *fields* includes obsolete keys i.e. `?fields=old_data1,old_data2`
