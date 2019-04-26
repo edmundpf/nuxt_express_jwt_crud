@@ -1,4 +1,7 @@
 var inquirer = require('inquirer')
+const jsonfile = require('jsonfile')
+const editJson = require('edit-json-file')
+const snakeCase = require('lodash').snakeCase
 const models = require('./data_api/models')
 
 const packageConfig = require('./package.json')
@@ -10,7 +13,8 @@ const serverConfig = require('./data_api/config/server-config.json')
 
 // Get Action
 
-function getAction() {
+async function getAction() {
+
 	const choices = {
 						configApp: 'Configure API/Web App',
 						configSchema: 'Configure Database Schema',
@@ -18,7 +22,7 @@ function getAction() {
 						createAdmin: 'Create an admin account',
 						resetAdmin: 'Reset admin accounts',
 					}
-	inquirer.prompt([
+	const answer = await inquirer.prompt([
 		{ 
 			type: 'list',
 			name: 'action',
@@ -26,20 +30,21 @@ function getAction() {
 			choices: Object.values(choices)
 		}
 	])
-	.then(answer => {
-		for (const choice of Object.keys(choices)) {
-			if (choices[choice] == answer.action) {
-				eval(`${choice}()`)
-			}
+
+	for (const choice of Object.keys(choices)) {
+		if (choices[choice] == answer.action) {
+			eval(`${choice}()`)
 		}
-	})
+	}
 }
 
 // Configure API/Web App
 
-function configApp() {
-	console.log('> Hit enter to use current values.')
-	inquirer.prompt([
+async function configApp() {
+
+	print('Hit enter to use current values.')
+
+	const answer = await inquirer.prompt([
 		{ 
 			type: 'input',
 			name: 'package_name',
@@ -54,25 +59,25 @@ function configApp() {
 		},
 		{ 
 			type: 'input',
-			name: 'package_desc',
+			name: 'package_description',
 			message: 'Enter package description:',
 			default: packageConfig.description
 		},
 		{ 
 			type: 'input',
-			name: 'author_name',
+			name: 'package_author_name',
 			message: 'Enter author name:',
 			default: authorName(packageConfig.author),
 		},
 		{ 
 			type: 'input',
-			name: 'author_email',
+			name: 'package_author_email',
 			message: 'Enter author email:',
 			default: authorEmail(packageConfig.author),
 		},
 		{ 
 			type: 'list',
-			name: 'private_repo',
+			name: 'package_private',
 			message: 'Is this package private or public?',
 			choices: [
 				{
@@ -87,81 +92,143 @@ function configApp() {
 		},
 		{ 
 			type: 'input',
-			name: 'api_port',
+			name: 'server_serverPort',
 			message: 'Enter backend API port:',
 			validate: isNumber,
+			filter: getNumber,
 			default: serverConfig.serverPort,
 		},
 		{ 
 			type: 'input',
-			name: 'web_port',
+			name: 'server_corsPort',
 			message: 'Enter web app port:',
 			validate: isNumber,
+			filter: getNumber,
 			default: serverConfig.corsPort,
 		},
 		{ 
 			type: 'input',
-			name: 'mongo_port',
+			name: 'server_mongoosePort',
 			message: 'Enter MongoDB port:',
 			validate: isNumber,
+			filter: getNumber,
 			default: serverConfig.mongoosePort,
 		},
 		{ 
 			type: 'input',
-			name: 'mongo_name',
+			name: 'server_databaseName',
 			message: 'Enter MongoDB database name:',
 			default: serverConfig.databaseName,
 		},
 		{ 
 			type: 'input',
-			name: 'web_name',
+			name: 'web_site_title',
 			message: 'Enter website name to display in title bar:',
 			default: webConfig.site_title,
 		},
 		{ 
 			type: 'input',
-			name: 'web_desc',
+			name: 'web_site_desc',
 			message: 'Enter website description:',
 			default: webConfig.site_desc,
 		},
 	])
-	.then(answer => {
-		console.log(answer)
-		exitPrompt()
-	})
+
+	var update_map = { 
+						package: {},
+						server: {},
+						web: {},
+					}
+
+	update_map.package.author = `${answer.package_author_name} <${answer.package_author_email}>`
+	update_map.web.port = answer.server_corsPort
+
+	for (const field of Object.keys(answer)) {
+		var update_type = field.slice(0, field.indexOf('_'))
+		var update_key = field.slice(field.indexOf('_') + 1)
+		if (!['author_name', 'author_email'].includes(update_key)) {
+			update_map[update_type][update_key] = answer[field]
+		}
+	}
+
+	try {
+		await jsonfile.writeFile('./assets/json/webConfig.json', 
+								update_map.web, { spaces: 2, EOL: '\r\n' })
+		print('Saved web config changes.', 'success')
+	}
+	catch {
+		print('Could not save web config changes.', 'danger')
+	}
+
+	updateJSON('./package.json', 'package config', update_map.package)
+	updateJSON('./data_api/config/server-config.json', 'server config', update_map.server)
+	
+	await exitPrompt()
+
 }
 
 // Configure Schema
 
-function configSchema() {
+async function configSchema() {
+
 	var prompts = []
 	const schemas = Object.keys(models)
+	const cur_schemas = Object.keys(schemaConfig)
+
 	for (const schema of schemas) {
+
+		var schema_defs = {}
+		if (cur_schemas.includes(schema)) {
+			schema_defs = { path: schemaConfig[schema].path, 
+									key: schemaConfig[schema].primary_key }
+		}
+		else {
+			schema_defs = { path: snakeCase(schema), key: null }
+		}
+
 		if (!['userAuth', 'secretKey'].includes(schema)) {
 			prompts.push(
 			{
 				type: 'input',
 				name: `${schema}_path`,
 				message: `Enter "${schema}" web path:`,
+				default: schema_defs.path,
 			},
 			{
 				type: 'input',
-				name: `${schema}_key`,
+				name: `${schema}_primary_key`,
 				message: `Enter "${schema}" primary key:`,
+				default: schema_defs.key,
 			})
 		}
 	}
-	inquirer.prompt(prompts)
-	.then(answer => {
-		console.log(answer)
-		exitPrompt()
-	})
+
+	const answer = await inquirer.prompt(prompts)
+
+	const update_map = {}
+
+	for (const field of Object.keys(answer)) {
+		var update_type = field.slice(0, field.indexOf('_'))
+		var update_key = field.slice(field.indexOf('_') + 1)
+		if (update_map[update_type] == null) {
+			update_map[update_type] = { [update_key]: answer[field] }
+		}
+		else {
+			update_map[update_type][update_key] = answer[field]
+		}
+	}
+
+	updateJSON('./data_api/config/schema-config.json', 'schema config', update_map)
+
+	await exitPrompt()
+
 }
 
 // Set Secret Key
 
-function setSecret() {
-	inquirer.prompt([
+async function setSecret() {
+
+	const answer = await inquirer.prompt([
 		{ 
 			type: 'password',
 			name: 'secret1',
@@ -175,16 +242,17 @@ function setSecret() {
 			mask: true,
 		},
 	])
-	.then(answer => {
-		console.log(answer)
-		exitPrompt()
-	})
+
+	console.log(answer)
+	await exitPrompt()
+
 }
 
 // Create Admin Account
 
-function createAdmin() {
-	inquirer.prompt([
+async function createAdmin() {
+
+	const answer = await inquirer.prompt([
 		{ 
 			type: 'password',
 			name: 'secret_key',
@@ -207,17 +275,19 @@ function createAdmin() {
 			message: 'Confirm password:',
 		},
 	])
-	.then(answer => {
-		console.log(answer)
-		exitPrompt()
-	})
+
+	console.log(answer)
+	await exitPrompt()
+
 }
 
 // Reset Admin Accounts
 
-function resetAdmin() {
-	console.log('> This will delete all your admin account credentials.')
-	inquirer.prompt([
+async function resetAdmin() {
+
+	print('This will delete all your admin account credentials.')
+
+	const answer = await inquirer.prompt([
 		{ 
 			type: 'list',
 			name: 'delete',
@@ -225,22 +295,22 @@ function resetAdmin() {
 			choices: ['Yes', 'No']
 		},
 	])
-	.then(answer => {
-		console.log(answer)
-		if (answer.delete == 'No') {
-			exitPrompt()
-		}
-		else {
-			surePrompt()
-		}
-	})
+
+	console.log(answer)
+	if (answer.delete == 'No') {
+		await exitPrompt()
+	}
+	else {
+		await surePrompt()
+	}
 
 }
 
 // Are you sure prompt
 
-function surePrompt(action) {
-	inquirer.prompt([
+async function surePrompt(action) {
+
+	const answer = await inquirer.prompt([
 		{ 
 			type: 'list',
 			name: 'sure',
@@ -248,17 +318,17 @@ function surePrompt(action) {
 			choices: ['Yes', 'No']
 		},
 	])
-	.then(answer => {
-		console.log(answer)
-		exitPrompt()
-		return
-	})
+
+	console.log(answer)
+	await exitPrompt()
+
 }
 
 // Exit Prompt
 
-function exitPrompt() {
-	inquirer.prompt([
+async function exitPrompt() {
+
+	const answer = await inquirer.prompt([
 		{ 
 			type: 'list',
 			name: 'exit',
@@ -266,14 +336,43 @@ function exitPrompt() {
 			choices: ['Do something else', 'Exit'],
 		},
 	])
-	.then(answer => {
-		if (answer.exit == 'Exit') {
-			console.log('Goodbye.')
+
+	if (answer.exit == 'Exit') {
+		print('Goodbye.')
+	}
+	else {
+		await getAction()
+	}
+
+}
+
+// Print
+
+function print(text, type) {
+	if (type == null) {
+		console.log(`\x1b[1m> ${text}\x1b[0m`)
+	}
+	else if (type == 'success') {
+		console.log(`\x1b[32m\x1b[1m> ${text}\x1b[0m`)
+	}
+	else if (type == 'danger') {
+		console.log(`\x1b[31m\x1b[1m> ${text}\x1b[0m`)
+	}
+}
+
+// Update JSON File
+
+function updateJSON(filename, title, dict) {
+	try {
+		const file = editJson(filename, { autosave: true })
+		for (const key of Object.keys(dict)) {
+			file.set(key, dict[key])
 		}
-		else {
-			getAction()
-		}
-	})
+		print(`Saved ${title} changes.`, 'success')
+	}
+	catch (error) {
+		print(`Could not update ${title}.`)
+	}
 }
 
 // Get author name
@@ -297,6 +396,12 @@ function isNumber(text) {
 	else { return 'Please enter a valid number.'}
 }
 
+// Convert to number
+
+function getNumber(text) {
+	return Number(text)
+}
+
 // Check if not empty
 
 function notEmpty(text) {
@@ -306,4 +411,11 @@ function notEmpty(text) {
 
 // DRIVER //
 
-getAction()
+try {
+	getAction()
+}
+catch(error) {
+	print('Fatal error, will exit.', 'danger')
+	console.log(error)
+}
+
