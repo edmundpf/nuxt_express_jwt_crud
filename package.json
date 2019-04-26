@@ -2,7 +2,7 @@
   "name": "nuxt_express_jwt_crud",
   "version": "1.0.0",
   "description": "Nuxt/Express/MongoDB/JWT Admin CRUD Boilerplate",
-  "author": "YOUR NAME HERE <your_email_here>",
+  "author": "YOUR_NAME_HERE <your_email_here>",
   "private": true,
   "scripts": {
     "dev": "nuxt",

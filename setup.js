@@ -630,7 +630,7 @@ async function exitPrompt() {
 function protectedMessage() {
 	print('This API endpoint is protected by JWT because you already set up a secret key. ' +
 			"You'll need to log in here or in the web app to edit/create a secret key or admin credentials." +
-			"If you forgot your credentials, you'll need to reset your accounts and secret key via CLI option 6.", 
+			"If you forgot your credentials, you'll need to reset your accounts and secret key via CLI option 5.", 
 				'danger')
 }
 
