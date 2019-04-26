@@ -1,7 +1,5 @@
 # Nuxt/Express/MongoDB/JWT Admin CRUD Boilerplate
-![CRUD Example](https://i.imgur.com/44DjLhe.gif "CRUD Example")
-
-
+<img src="/assets/misc/crud.gif?raw=true">
 > Automatic Express API and CRUD web app for your MongoDB collections. Just add your schema to the *data_api/models* folder, run the included setup script to customize your configuration and add your admin credentials. All API endpoints and web app pages are protected by JSON Web Token authentification automatically.
 
 ## Setup
@@ -44,4 +42,3 @@
 	* Use the credentials you created with the CLI to login
 	* The JSON Web Token has a 24 hour inactivity timeout until you will be logged off of the web app/API
 		* You'll need to login again to get a new token
-	
