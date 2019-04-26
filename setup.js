@@ -2,12 +2,20 @@ var inquirer = require('inquirer')
 const jsonfile = require('jsonfile')
 const editJson = require('edit-json-file')
 const snakeCase = require('lodash').snakeCase
+const request = require('request-promise');
 const models = require('./data_api/models')
 
 const packageConfig = require('./package.json')
 const webConfig = require('./assets/json/webConfig.json')
 const schemaConfig = require('./data_api/config/schema-config.json')
 const serverConfig = require('./data_api/config/server-config.json')
+
+var REQUEST_CONFIG = {
+	username: '',
+	password: '',
+	token: '',
+	port: serverConfig.serverPort,
+}
 
 // METHODS //
 
@@ -20,11 +28,11 @@ async function getAction() {
 						configSchema: 'Configure Database Schema',
 						setSecret: 'Set up a secret key',
 						createAdmin: 'Create an admin account',
-						resetAdmin: 'Reset admin accounts',
+						resetAdmin: 'Reset admin accounts and secret key',
 					}
 	const answer = await inquirer.prompt([
 		{ 
-			type: 'list',
+			type: 'rawlist',
 			name: 'action',
 			message: 'What would you like to do?',
 			choices: Object.values(choices)
@@ -134,6 +142,7 @@ async function configApp() {
 		},
 	])
 
+	var api_temp_port = REQUEST_CONFIG.port
 	var update_map = { 
 						package: {},
 						server: {},
@@ -147,6 +156,9 @@ async function configApp() {
 		var update_type = field.slice(0, field.indexOf('_'))
 		var update_key = field.slice(field.indexOf('_') + 1)
 		if (!['author_name', 'author_email'].includes(update_key)) {
+			if (update_key == 'serverPort') {
+				api_temp_port = answer[field]
+			}
 			update_map[update_type][update_key] = answer[field]
 		}
 	}
@@ -161,7 +173,9 @@ async function configApp() {
 	}
 
 	updateJSON('./package.json', 'package config', update_map.package)
-	updateJSON('./data_api/config/server-config.json', 'server config', update_map.server)
+	if (updateJSON('./data_api/config/server-config.json', 'server config', update_map.server)) {
+		REQUEST_CONFIG.port = api_temp_port
+	}
 	
 	await exitPrompt()
 
@@ -228,22 +242,48 @@ async function configSchema() {
 
 async function setSecret() {
 
-	const answer = await inquirer.prompt([
-		{ 
-			type: 'password',
-			name: 'secret1',
-			message: 'Enter your secret key (shh):',
-			mask: true,
-		},
-		{ 
-			type: 'password',
-			name: 'secret2',
-			message: 'Confirm your secret key:',
-			mask: true,
-		},
-	])
+	try {
+		var key_match = false
+		var answer
+		while (!key_match) {
+			answer = await inquirer.prompt([
+				{ 
+					type: 'password',
+					name: 'secret1',
+					message: 'Enter your secret key (shh):',
+					mask: true,
+				},
+				{ 
+					type: 'password',
+					name: 'secret2',
+					message: 'Confirm your secret key:',
+					mask: true,
+				},
+			])
 
-	console.log(answer)
+			key_match = (answer.secret1 == answer.secret2)
+			if (!key_match) {
+				print('Keys do not match! Please try again.', 'danger')
+			}
+		}
+
+		const req = await request({
+			method: 'GET',
+			uri: `http://localhost:${REQUEST_CONFIG.port}/secret_key/insert?key=${answer.secret1}`,
+			headers: { 'authorization': REQUEST_CONFIG.token },
+			json: true,
+		})
+		console.log(req)	
+	}
+	catch (err) {
+		if (err.error.response.message != null && err.error.response.message == 'No token provided.') {
+			print('This API endpoint is protected because you already set up a secret key. ' +
+					'Log into the web app to edit your existing secret key or insert a new one. ' +
+					"If you forgot your credentials, you'll need to reset your accounts and secret key via CLI option 5.", 
+					'danger')
+		}
+	}
+
 	await exitPrompt()
 
 }
@@ -369,9 +409,11 @@ function updateJSON(filename, title, dict) {
 			file.set(key, dict[key])
 		}
 		print(`Saved ${title} changes.`, 'success')
+		return true
 	}
 	catch (error) {
 		print(`Could not update ${title}.`)
+		return false
 	}
 }
 

@@ -237,7 +237,7 @@ app.all('/:path(signup)', verifyToken, async (req, res) => {
 
 // Update Password
 
-app.all('/update_password', verifyToken, async (req, res) => {
+app.all('/update_password', async (req, res) => {
 
 	try {
 
