@@ -243,49 +243,92 @@ async function configSchema() {
 async function setSecret() {
 
 	try {
-		var key_match = false
-		var answer
-		while (!key_match) {
-			answer = await inquirer.prompt([
-				{ 
-					type: 'password',
-					name: 'secret1',
-					message: 'Enter your secret key (shh):',
-					mask: true,
-				},
-				{ 
-					type: 'password',
-					name: 'secret2',
-					message: 'Confirm your secret key:',
-					mask: true,
-				},
-			])
 
-			key_match = (answer.secret1 == answer.secret2)
-			if (!key_match) {
-				print('Keys do not match! Please try again.', 'danger')
+		if (REQUEST_CONFIG.token == '') {
+
+			try {
+				const req = await request({
+					method: 'GET',
+					uri: `http://localhost:${REQUEST_CONFIG.port}/secret_key/get_all`,
+					json: true,
+				})
+				if (req.status == 'ok') {
+					if (await secretKey()) { return }
+					else { return await tryAgain(setSecret) }
+				}
+			}
+			catch (err) {
+				print('This API endpoint is protected since a secret key has already been set up. You must log in to change your secret key.')
+			}
+	
+			if (await login()) {
+				if (await secretKey()) { return }
+				else { return await tryAgain(setSecret) }
 			}
 		}
-
-		const req = await request({
-			method: 'GET',
-			uri: `http://localhost:${REQUEST_CONFIG.port}/secret_key/insert?key=${answer.secret1}`,
-			headers: { 'authorization': REQUEST_CONFIG.token },
-			json: true,
-		})
-		console.log(req)	
+		else if (REQUEST_CONFIG.token != '') {
+			if (await secretKey()) { return }
+			else { return await tryAgain(setSecret) }
+		}
 	}
 	catch (err) {
-		if (err.error.response.message != null && err.error.response.message == 'No token provided.') {
-			print('This API endpoint is protected because you already set up a secret key. ' +
-					'Log into the web app to edit your existing secret key or insert a new one. ' +
-					"If you forgot your credentials, you'll need to reset your accounts and secret key via CLI option 5.", 
-					'danger')
+		if (err.error.response != null && 
+			err.error.response.message != null && 
+			err.error.response.message == 'No token provided.') {
+				protectedMessage()
+		}
+		else { 
+			print('Could not set secret key.', 'danger')
 		}
 	}
 
-	await exitPrompt()
+}
 
+// Set Secret Key Routine
+
+async function secretKey() {
+
+	var key_match = false
+	var answer
+	while (!key_match) {
+		answer = await inquirer.prompt([
+			{ 
+				type: 'password',
+				name: 'secret1',
+				message: 'Enter your secret key (shh):',
+				mask: true,
+			},
+			{ 
+				type: 'password',
+				name: 'secret2',
+				message: 'Confirm your secret key:',
+				mask: true,
+			},
+		])
+
+		key_match = (answer.secret1 == answer.secret2)
+		if (!key_match) {
+			print('Keys do not match! Please try again.', 'danger')
+		}
+	}
+
+	const req = await request({
+		method: 'GET',
+		uri: `http://localhost:${REQUEST_CONFIG.port}/secret_key/insert?key=${answer.secret1}`,
+		headers: { 'authorization': REQUEST_CONFIG.token },
+		json: true,
+	})
+
+	if (req.status == 'ok') {
+		print('Set new secret key.', 'success')
+		await exitPrompt()
+		return true
+	}
+	else {
+		print('Could not set secret key.', 'danger')
+		console.log(req.response)
+		return false
+	}
 }
 
 // Create Admin Account
@@ -346,6 +389,60 @@ async function resetAdmin() {
 
 }
 
+// Login
+
+async function login() {
+
+	print('Login to your admin account.')
+
+	try {
+
+		const answer = await inquirer.prompt([
+			{
+				type: 'input',
+				name: 'username',
+				message: 'Enter your username:'
+			},
+			{ 
+				type: 'password',
+				name: 'password',
+				message: 'Enter your password:',
+				mask: true,
+			},
+		])
+
+		const req = await request({
+			method: 'GET',
+			uri: `http://localhost:${REQUEST_CONFIG.port}/login?username=${answer.username}&password=${answer.password}`,
+			json: true,
+		})
+
+		if (req.status == 'ok') {
+			REQUEST_CONFIG.username = req.response.username
+			REQUEST_CONFIG.password = answer.pass1
+			REQUEST_CONFIG.token = req.response.access_token
+			print('Logged in successfully.', 'success')
+			return true
+		}
+		else {
+			print('Could not login.', 'danger')
+			return await tryAgain(login)
+		}
+
+	}
+
+	catch (err) {
+		if (err.error.response != null && err.error.response.message != null) {
+			print(err.error.response.message, 'danger') 
+		}
+		else {
+			print('Could not login.', 'danger')
+		}
+		return await tryAgain(login)
+	}
+
+}
+
 // Are you sure prompt
 
 async function surePrompt(action) {
@@ -361,6 +458,29 @@ async function surePrompt(action) {
 
 	console.log(answer)
 	await exitPrompt()
+
+}
+
+// Try again prompt
+
+async function tryAgain(action) {
+
+	const answer = await inquirer.prompt([
+		{ 
+			type: 'list',
+			name: 'again',
+			message: 'Would you like to try again?',
+			choices: ['Yes', 'No']
+		},
+	])
+
+	if (answer.again == 'Yes') {
+		return await action()
+	}
+	else {
+		await exitPrompt()
+		return false
+	}
 
 }
 
@@ -384,6 +504,15 @@ async function exitPrompt() {
 		await getAction()
 	}
 
+}
+
+// Protected Message
+
+function protectedMessage() {
+	print('This API endpoint is protected by JWT because you already set up a secret key. ' +
+			"You'll need to log in here or in the web app to edit your existing secret key. " +
+			"If you forgot your credentials, you'll need to reset your accounts and secret key via CLI option 5.", 
+				'danger')
 }
 
 // Print

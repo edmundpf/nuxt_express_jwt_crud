@@ -1,4 +1,4 @@
-import webConfig from '~/assets/json/webConfig.json'
+import webConfig from './assets/json/webConfig.json'
 module.exports = {
 	
 	// Page Headers

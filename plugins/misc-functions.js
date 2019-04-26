@@ -1,3 +1,5 @@
+import serverConfig from '~/data_api/config/server-config.json'
+
 export async function apiReq(obj, endpoint, params) {
 	var param_str = '';
 	var login_req = '';
@@ -17,7 +19,7 @@ export async function apiReq(obj, endpoint, params) {
 	}
 
 	try {
-		login_req = await obj.$axios.$get(`http://localhost:4000/${endpoint}${param_str}`);
+		login_req = await obj.$axios.$get(`http://localhost:${serverConfig.serverPort}/${endpoint}${param_str}`);
 	}
 	catch(error) {
 		login_req = error.response.data;
