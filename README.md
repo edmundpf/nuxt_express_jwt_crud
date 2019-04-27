@@ -32,6 +32,7 @@
 		* It also includes your API server port, web app port, database port, database name, and your web page titles
 	* You can clear your admin accounts and secret keys via option (5)
 ## Run Web App
+* When using the web app you can shut off your API server, the web app will automatically launch it as server middleware
 * Launch as shown below...
 	``` bash
 	# Launch dev instance
