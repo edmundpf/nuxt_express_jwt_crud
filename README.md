@@ -14,9 +14,12 @@
 ![CLI Setup](https://i.imgur.com/se8ewac.gif "CLI Setup")
 * Using the CLI
 	``` bash
+	# First you'll need to start your API server
+	$ node data_api/index.js
 	# Start the setup script
 	$ node setup.js
 	```
+	* **NOTE:** your mongoDB server will need to be running to use the API, CLI, and web app
 	* You'll need to set up a secret key to create an admin user
 		* Select option (3) and set up your key
 	* You'll need to add an admin user to access the web app
