@@ -47,7 +47,6 @@
 	* Use the credentials you created with the CLI to login
 	* The JSON Web Token has a 24 hour inactivity timeout until you will be logged off of the web app/API
 		* You'll need to login again to get a new token
-	* **NOTE:** You'll have access to edit your user auth schema in the web app. The API expects usernames of at least 8 characters, and passwords of at least 8 characters with at least one number. These rules do not exist in the web app so can cause unexpected behavior upon API/web app login if not followed. To enforce these rules, use the `/update_password` endpoint of the API to update your admin credentials, see more info on the API below. 
 ## API Routes
 * Use any language of choice to edit your data and see the changes on the web app in real time
 * [API Info](https://github.com/edmundpf/nuxt_express_jwt_crud/blob/master/data_api/README.md)
