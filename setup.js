@@ -34,9 +34,10 @@ async function getAction() {
 						setSecret: 'Set up a secret key',
 						createAdmin: 'Create an admin account',
 						resetAdmin: 'Reset admin accounts and secret key',
+						updatePassword: 'Update admin password',
 					}
 	const answer = await inquirer.prompt([
-		{ 
+		{
 			type: 'rawlist',
 			name: 'action',
 			message: 'What would you like to do?',
@@ -59,37 +60,37 @@ async function configApp() {
 	print('Hit enter to use current values.')
 
 	const answer = await inquirer.prompt([
-		{ 
+		{
 			type: 'input',
 			name: 'package_name',
 			message: 'Enter a package name:',
 			default: packageConfig.name,
 		},
-		{ 
+		{
 			type: 'input',
 			name: 'package_version',
 			message: 'Enter package version:',
 			default: packageConfig.version,
 		},
-		{ 
+		{
 			type: 'input',
 			name: 'package_description',
 			message: 'Enter package description:',
 			default: packageConfig.description
 		},
-		{ 
+		{
 			type: 'input',
 			name: 'package_author_name',
 			message: 'Enter author name:',
 			default: authorName(packageConfig.author),
 		},
-		{ 
+		{
 			type: 'input',
 			name: 'package_author_email',
 			message: 'Enter author email:',
 			default: authorEmail(packageConfig.author),
 		},
-		{ 
+		{
 			type: 'list',
 			name: 'package_private',
 			message: 'Is this package private or public?',
@@ -104,7 +105,7 @@ async function configApp() {
 				}
 			],
 		},
-		{ 
+		{
 			type: 'input',
 			name: 'server_serverPort',
 			message: 'Enter backend API port:',
@@ -112,7 +113,7 @@ async function configApp() {
 			filter: getNumber,
 			default: serverConfig.serverPort,
 		},
-		{ 
+		{
 			type: 'input',
 			name: 'server_corsPort',
 			message: 'Enter web app port:',
@@ -120,7 +121,7 @@ async function configApp() {
 			filter: getNumber,
 			default: serverConfig.corsPort,
 		},
-		{ 
+		{
 			type: 'input',
 			name: 'server_mongoosePort',
 			message: 'Enter MongoDB port:',
@@ -128,19 +129,19 @@ async function configApp() {
 			filter: getNumber,
 			default: serverConfig.mongoosePort,
 		},
-		{ 
+		{
 			type: 'input',
 			name: 'server_databaseName',
 			message: 'Enter MongoDB database name:',
 			default: serverConfig.databaseName,
 		},
-		{ 
+		{
 			type: 'input',
 			name: 'web_site_title',
 			message: 'Enter website name to display in title bar:',
 			default: webConfig.site_title,
 		},
-		{ 
+		{
 			type: 'input',
 			name: 'web_site_desc',
 			message: 'Enter website description:',
@@ -149,9 +150,9 @@ async function configApp() {
 	])
 
 	var config_temp = { port: REQUEST_CONFIG.port,
-						mongoosePort: REQUEST_CONFIG.mongoosePort, 
+						mongoosePort: REQUEST_CONFIG.mongoosePort,
 						database: REQUEST_CONFIG.database }
-	var update_map = { 
+	var update_map = {
 						package: {},
 						server: {},
 						web: {},
@@ -178,11 +179,11 @@ async function configApp() {
 	}
 
 	try {
-		await jsonfile.writeFile('./assets/json/webConfig.json', 
+		await jsonfile.writeFile('./assets/json/webConfig.json',
 								update_map.web, { spaces: 2, EOL: '\r\n' })
 		print('Saved web config changes.', 'success')
 	}
-	catch {
+	catch (err) {
 		print('Could not save web config changes.', 'danger')
 	}
 
@@ -192,7 +193,7 @@ async function configApp() {
 		REQUEST_CONFIG.mongoosePort = config_temp.mongoosePort
 		REQUEST_CONFIG.database = config_temp.database
 	}
-	
+
 	await exitPrompt()
 
 }
@@ -212,7 +213,7 @@ async function configSchema() {
 
 		var schema_defs = {}
 		if (cur_schemas.includes(schema)) {
-			schema_defs = { path: schemaConfig[schema].path, 
+			schema_defs = { path: schemaConfig[schema].path,
 									key: schemaConfig[schema].primary_key }
 		}
 		else {
@@ -293,12 +294,12 @@ async function setSecret() {
 		}
 	}
 	catch (err) {
-		if (err.error.response != null && 
-			err.error.response.message != null && 
+		if (err.error.response != null &&
+			err.error.response.message != null &&
 			err.error.response.message == 'No token provided.') {
 				protectedMessage()
 		}
-		else { 
+		else {
 			print('Could not set secret key.', 'danger')
 		}
 		return await tryAgain(setSecret)
@@ -314,13 +315,13 @@ async function secretKey() {
 	var answer
 	while (!key_match) {
 		answer = await inquirer.prompt([
-			{ 
+			{
 				type: 'password',
 				name: 'secret1',
 				message: 'Enter your secret key (shh):',
 				mask: true,
 			},
-			{ 
+			{
 				type: 'password',
 				name: 'secret2',
 				message: 'Confirm your secret key:',
@@ -371,8 +372,8 @@ async function createAdmin() {
 				})
 			}
 			catch (err) {
-				if (err.error.response != null && 
-					err.error.response.message != null && 
+				if (err.error.response != null &&
+					err.error.response.message != null &&
 					err.error.response.message == 'Not Authorized.') {
 						if (await adminAccount()) { return }
 						else { return await tryAgain(adminAccount) }
@@ -393,12 +394,12 @@ async function createAdmin() {
 		}
 	}
 	catch (err) {
-		if (err.error.response != null && 
-			err.error.response.message != null && 
+		if (err.error.response != null &&
+			err.error.response.message != null &&
 			err.error.response.message == 'No token provided.') {
 				protectedMessage()
 		}
-		else { 
+		else {
 			print('Could not create admin account.', 'danger')
 		}
 		return await tryAgain(createAdmin)
@@ -419,19 +420,19 @@ async function adminAccount() {
 				name: 'username',
 				message: 'Enter new account username:'
 			},
-			{ 
+			{
 				type: 'password',
 				name: 'pass1',
 				message: 'Enter new account password:',
 				mask: true,
 			},
-			{ 
+			{
 				type: 'password',
 				name: 'pass2',
 				message: 'Confirm new account password:',
 				mask: true,
 			},
-			{ 
+			{
 				type: 'password',
 				name: 'secret_key',
 				message: 'Enter your secret key:',
@@ -471,7 +472,7 @@ async function resetAdmin() {
 	print('This will delete all your admin account credentials.', 'success')
 
 	const answer = await inquirer.prompt([
-		{ 
+		{
 			type: 'list',
 			name: 'delete',
 			message: 'Do you want to clear all admin credentials?',
@@ -485,7 +486,7 @@ async function resetAdmin() {
 	else {
 		if (await surePrompt()) {
 
-			db = mongoose.connect(`mongodb://localhost:${REQUEST_CONFIG.mongoosePort}/${REQUEST_CONFIG.database}`, 
+			db = mongoose.connect(`mongodb://localhost:${REQUEST_CONFIG.mongoosePort}/${REQUEST_CONFIG.database}`,
 							{ useNewUrlParser: true, useCreateIndex: true,
 								useFindAndModify: false })
 
@@ -499,6 +500,76 @@ async function resetAdmin() {
 			}
 			await exitPrompt()
 		}
+	}
+
+}
+
+// Update Password Routine
+
+async function updatePassword() {
+
+	print('This will update your admin password.', 'success')
+
+	try {
+		var pass_match = false
+		var answer
+		while (!pass_match) {
+			answer = await inquirer.prompt([
+				{
+					type: 'input',
+					name: 'username',
+					message: 'Enter account username:'
+				},
+				{
+					type: 'password',
+					name: 'old_pass',
+					message: 'Enter current password:',
+					mask: true,
+				},
+				{
+					type: 'password',
+					name: 'pass1',
+					message: 'Enter new password:',
+					mask: true,
+				},
+				{
+					type: 'password',
+					name: 'pass2',
+					message: 'Confirm new password:',
+					mask: true,
+				},
+			])
+
+			pass_match = (answer.pass1 == answer.pass2)
+			if (!pass_match) {
+				print('Passwords do not match! Please try again.', 'danger')
+			}
+		}
+
+		const req = await request({
+			method: 'GET',
+			uri: `http://localhost:${REQUEST_CONFIG.port}/update_password?username=${answer.username}&current_password=${answer.old_pass}&password=${answer.pass1}`,
+			json: true,
+		})
+
+		if (req.status == 'ok') {
+			print('Updated admin password successfully.', 'success')
+			await exitPrompt()
+			return true
+		}
+		else {
+			print('Could not update admin password.', 'danger')
+			return false
+		}
+	}
+	catch (err) {
+		if (err.error.response != null && err.error.response.message != null) {
+			print(err.error.response.message, 'danger')
+		}
+		else {
+			print('Could not update admin password.', 'danger')
+		}
+		return await tryAgain(login)
 	}
 
 }
@@ -517,7 +588,7 @@ async function login() {
 				name: 'username',
 				message: 'Enter your username:'
 			},
-			{ 
+			{
 				type: 'password',
 				name: 'password',
 				message: 'Enter your password:',
@@ -547,7 +618,7 @@ async function login() {
 
 	catch (err) {
 		if (err.error.response != null && err.error.response.message != null) {
-			print(err.error.response.message, 'danger') 
+			print(err.error.response.message, 'danger')
 		}
 		else {
 			print('Could not login.', 'danger')
@@ -562,7 +633,7 @@ async function login() {
 async function tryAgain(action) {
 
 	const answer = await inquirer.prompt([
-		{ 
+		{
 			type: 'list',
 			name: 'again',
 			message: 'Would you like to try again?',
@@ -585,7 +656,7 @@ async function tryAgain(action) {
 async function surePrompt(action) {
 
 	const answer = await inquirer.prompt([
-		{ 
+		{
 			type: 'list',
 			name: 'sure',
 			message: 'Are you sure?',
@@ -607,7 +678,7 @@ async function surePrompt(action) {
 async function exitPrompt() {
 
 	const answer = await inquirer.prompt([
-		{ 
+		{
 			type: 'list',
 			name: 'exit',
 			message: 'Would you like to do something else or exit?:',
@@ -630,7 +701,7 @@ async function exitPrompt() {
 function protectedMessage() {
 	print('This API endpoint is protected by JWT because you already set up a secret key. ' +
 			"You'll need to log in here or in the web app to edit/create a secret key or admin credentials." +
-			"If you forgot your credentials, you'll need to reset your accounts and secret key via CLI option 5.", 
+			"If you forgot your credentials, you'll need to reset your accounts and secret key via CLI option 5.",
 				'danger')
 }
 
@@ -645,7 +716,7 @@ function updateJSON(filename, title, dict) {
 		print(`Saved ${title} changes.`, 'success')
 		return true
 	}
-	catch (error) {
+	catch (err) {
 		print(`Could not update ${title}.`)
 		return false
 	}
@@ -705,7 +776,7 @@ function main() {
 	try {
 		getAction()
 	}
-	catch(error) {
+	catch (err) {
 		print('Fatal error, will exit.', 'danger')
 		console.log(error)
 	}
