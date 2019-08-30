@@ -35,7 +35,7 @@
 	* Success: `{ status: 'ok', response: { message: 'Token verified.'}`
   ## CRUD Routes
   * Routes are applied to collection name i.e. "x"
-    * I.E. */reddit_user/insert?...*
+    * I.E. */user/insert?...*
   * `x/insert`
     * Inserts record
     * Success: `{attributes...}`
