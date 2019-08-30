@@ -34,7 +34,7 @@
 	* Parameters: `auth_token`
 	* Success: `{ status: 'ok', response: { message: 'Token verified.'}`
   ## CRUD Routes
-  * Routes are applied to *account_listing, reddit_submission, reddit_user, twitter_user, and user_auth* models
+  * Routes are applied to collection name i.e. "x"
     * I.E. */reddit_user/insert?...*
   * `x/insert`
     * Inserts record
@@ -50,7 +50,6 @@
     * `x/set` sets list to comma separated records
     * Primary key required
     * Success: `{ n, nModified, ok }`
-    * *push* and *set* **CANNOT** be used on *twitter_user* and *user_auth* routes
   * `x/delete, x/delete_all`
     * Deletes single record or all records, primary key required for *delete*
     * Success: `{ n, deletedCount, ok }`
