@@ -55,7 +55,7 @@
     * Success: `{ n, deletedCount, ok }`
   * `x/get`
     * Gets single record
-    * Parameters: requires model primary key, i.e. `/reddit_user/get?username=BOB`
+    * Parameters: requires model primary key, i.e. `/user/get?username=bob`
     * Success: `[{attributes...}]`
   * `x/get_all`
     * Gets all records
