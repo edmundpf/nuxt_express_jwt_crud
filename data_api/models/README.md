@@ -4,7 +4,7 @@
 * Example customer schema included
 * Add your own schemas for your purposes, *DO NOT DELETE* `user_auth` or `secret_key` schemas
 ## Customer
-**COLLECTION:** *twitter_users*
+**COLLECTION:** *customer*
 * email
   * string, unique, required
 * first_name
