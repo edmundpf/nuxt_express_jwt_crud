@@ -26,7 +26,7 @@
     "jsonfile": "^5.0.0",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.11",
-    "mongoose": "^5.5.2",
+    "mongoose": "^5.7.5",
     "mongoose-sequence": "^5.0.1",
     "node-sass": "^4.11.0",
     "nuxt": "^2.0.0",
